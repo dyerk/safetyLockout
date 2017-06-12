@@ -1,17 +1,3 @@
-# addUser 0.1:
-# This program allows the operator to read the NFC hex id from Rowan 
-# issued student ID and correlate the hex number to the studetns Banner
-# ID. These values are added to the College of Engineering maintained 
-# database (google sheet). The database is used to allow/deny students 
-# access to a variety of NFC locked out equipment based on status of 
-# training. 
-#
-# 
-# 10 June 2017
-# Karl Dyer - dyerk@rowan.edu
-
-
-
 # LIBRARIES
 # --------------
 # Import libraries used within program.
@@ -22,7 +8,6 @@ import gspread
 import Adafruit_PN532 as PN532
 
 from oauth2client.service_account import ServiceAccountCredentials
-
 
 
 # CONSTANTS
@@ -39,7 +24,6 @@ CARD_TYPE_USER = 0
 CARD_TYPE_UNKNOWN = 1
 
 
-
 # FUNCTIONS
 # --------------
 # Read hex id from NFC card - stalls program until card is detected.
@@ -49,12 +33,12 @@ def read_nfc_blocking():
         nfchex = pn532.read_passive_target()
     return binascii.hexlify(nfchex)
 
-# Stalls program until no card is present in front of card reader.    
+# Stalls program until no card is present in front of card reader.
 def wait_for_card_removal():
     while pn532.read_passive_target() != None:
         continue
     
-# Check database for NFC hex id and return whether card is registered.        
+# Check database for NFC hex id and return whether card is registered.
 def process_card(nfchex): 
     if AccessList is None:
         return CARD_TYPE_INVALID
@@ -65,7 +49,7 @@ def process_card(nfchex):
     except:
         return CARD_TYPE_UNKNOWN
 
-# Grant access to database worksheet using OAuth key in json file.        
+# Grant access to database worksheet using OAuth key in json file.
 def login_open_sheet(oauth_key_file, spreadsheet, sheet):
     try:
         scope = 'https://spreadsheets.google.com/feeds'
@@ -78,8 +62,30 @@ def login_open_sheet(oauth_key_file, spreadsheet, sheet):
         print('Google sheet login failed with error:', ex)
         sys.exit(1)
 
+# Prompt user and require a (y)es or (n)o response
+def validate_prompt_yn(prompt):
+    response = None
+    while response == None:
+        response = raw_input(prompt)
+        if response is 'y' or response is 'n':
+            break
+        else:
+            response = None
+    return response
 
-		
+# Prompt user and require an integer of specified length to be returned
+def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an integer'):
+    response = None
+    while response == None:
+        response = raw_input(prompt)
+        if response.isdigit() and len(response) == numDigits:
+            break
+        else:
+            print(errorMessage)
+            response = None
+    return response
+
+
 # BOARD CONFIGURATION
 # ------------------------
 # SPI pin declarations for a Raspberry Pi
@@ -98,7 +104,6 @@ print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
 pn532.SAM_configuration()
 
 
-
 # PROGRAM
 # ------------
 # Initialize program variables.
@@ -107,55 +112,40 @@ AccessList = None
 # Main script to setup card then loop to detect cards and interperet.
 while True:
     # Read NFC from Rowan ID card
-    print('Waiting for MiFare card...')
+    print('\nWaiting for MiFare card...')
     uidhex = read_nfc_blocking()    
     print('Card scanned has UID: {0}\n'.format(uidhex))
     
     # Gain access to database and look up card to see if valid
     if AccessList is None:
         AccessList = login_open_sheet(GDOCS_OAUTH_JSON, GDOCS_SPREADSHEET_NAME, WORKSHEET_ACCESS_NAME)
-    status = process_card(uidhex)
+    status = process_card(uidhex) 
     
     # Choose action based on status of card in database
     if status == CARD_TYPE_USER:
         print('Card {0} is already in system.'.format(uidhex))
-        userRow = AccessList.find(str(uidhex)).row
-        
+        userRow = AccessList.find(str(uidhex)).row   
     elif status == CARD_TYPE_UNKNOWN:
-        addNewCard = None
-        # Prompt user to add card and validate input to y/n
-        while addNewCard == None:
-            addNewCard = raw_input("Card is not in system. Do you want to add your card now (y/n): ")
-            if addNewCard is 'y' or addNewCard is 'n':
-                break
-            else:
-                addNewCard = None
-        
+        addNewCard = validate_prompt_yn("Card is not in system. Do you want to add your card now (y/n): ")
         if addNewCard is 'y':
-            bannerId = None
-            # Prompt user for banner ID number and validate input
-            while bannerId == None:
-                bannerId = raw_input('Banner ID: ')
-                if bannerId.isdigit() and len(bannerId) == 9:
-                    break
-                else:
-                    print('Valid Banner ID must contain 9 digits')
-                    bannerId = None
-            
+            bannerId = validate_prompt_integer('Banner ID: ', 9, 'Valid Banner ID must contain 9 digits')
             # Add card hex number and banner ID to database
             row = AccessList.row_count
             AccessList.resize(rows=row+1, cols=WORKSHEET_ACCESS_COLUMN_COUNT)
             AccessList.update_acell('A'+str(row+1), str(uidhex))
             AccessList.update_acell('B'+str(row+1), str(bannerId))
             userRow = AccessList.find(str(uidhex)).row
-            print('Card {0} has been added to the system'.format(uidhex))
+            print('Card {0} has been added to the system.'.format(uidhex))        
         elif addNewCard is 'n':
             continue
-    
+    else:
+        print('Error: Database could not be reached.')
+        continue
+        
     # Report card information back to user       
     userData = AccessList.row_values(userRow)
     print("Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}".format(userData[3], userData[2], userData[1], userData[5], userData[4]))
     
     # Prompt for card removal and wait until no card is detected
     print('\nPlease remove your ID.\n')
-    wait_for_card_removal()    
+    wait_for_card_removal()
