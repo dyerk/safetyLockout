@@ -1,24 +1,11 @@
-# monitorEquipment 0.1:
-# This program allows the operator to read the NFC hex id from Rowan 
-# issued student ID and lookup the hex number in the College of 
-# Engineering maintained database (google sheet). The program enables 
-# access to the machine by turning providing 3.3V logic level signals
-# that can be used to drive a relay or some other electronic controll.
-# 
-# 11 June 2017
-# Karl Dyer - dyerk@rowan.edu
-#
-# Change Log
-
-
 # LIBRARIES
 # --------------
 # Import libraries used within program.
 import sys
 import binascii
-from time import ctime
+import time
+import os
 
-import ntplib
 import RPi.GPIO as GPIO
 import gspread
 import Adafruit_PN532 as PN532
@@ -137,13 +124,13 @@ print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
 
-# Setup access to NTP clock server
-clock = ntplib.NTPClient()
-
 # Configure GPIO pins on the pi.
 GPIO.setup([LED_GREEN, LED_YELLOW, LED_RED, RELAY1], GPIO.OUT)
 #GPIO.setmode(GPIO.BOARD)
 
+# Setup clock
+os.environ['TZ'] = 'EST5EDT'
+time.tzset()
 
 # PROGRAM
 # ------------
@@ -154,7 +141,7 @@ AccessList = None
 while True:
     # Read NFC from Rowan ID card
     set_machine_state('disabled')
-    print('Insert Rowan ID card to enable ' + MACHINE_NAME + '\n')
+    print('\nInsert Rowan ID card to enable ' + MACHINE_NAME + '\n')
     uidhex = read_nfc_blocking()    
     
     # Gain access to database and machine log then look up card to see if valid
@@ -170,12 +157,12 @@ while True:
         print('User: {0} {1}'.format(userData[3], userData[2]))
         
         # Log user start into machine log
-        timestamp = clock.request('north-america.pool.ntp.org',version=3)
+        #timestamp = clock.request('north-america.pool.ntp.org',version=3)
         row = MachineLog.row_count
         MachineLog.resize(rows=row+1, cols=6)
         MachineLog.update_acell('A'+str(row+1), str(userData[1]))
         MachineLog.update_acell('B'+str(row+1), str(userData[3] + ' ' + userData[2]))
-        MachineLog.update_acell('C'+str(row+1), str(ctime(timestamp.tx_time)))        
+        MachineLog.update_acell('C'+str(row+1), str(time.strftime('%x %X %Z')))
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
@@ -184,8 +171,8 @@ while True:
             
             # Wait for user to log out then complete machine log
             wait_for_card_removal()
-            timestamp = clock.request('north-america.pool.ntp.org',version=3)
-            MachineLog.update_acell('D'+str(row+1), str(ctime(timestamp.tx_time)))
+            #timestamp = clock.request('north-america.pool.ntp.org',version=3)
+            MachineLog.update_acell('D'+str(row+1), str(time.strftime('%x %X %Z')))
         else:
             print('Certification not current')
         
