@@ -146,8 +146,8 @@ while True:
     userData = AccessList.row_values(userRow)
     if '#N/A' in userData: 
         print('''ID card NFC hex code and banner ID have been affiliated, but user data
-              has not been added to the master user list. Please contact Karl Dyer to 
-              complete user data.''')
+        has not been added to the master user list. Please contact Karl Dyer to 
+        complete user data.''')
     else:
         print('Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}'.format(userData[3], userData[2], userData[1], userData[5], userData[4]))
     
