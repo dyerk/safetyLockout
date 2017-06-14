@@ -126,7 +126,7 @@ while True:
         print('Card {0} is already in system.'.format(uidhex))
         userRow = AccessList.find(str(uidhex)).row   
     elif status == CARD_TYPE_UNKNOWN:
-        addNewCard = validate_prompt_yn("Card is not in system. Do you want to add your card now (y/n): ")
+        addNewCard = validate_prompt_yn('Card is not in system. Do you want to add your card now (y/n): ')
         if addNewCard is 'y':
             bannerId = validate_prompt_integer('Banner ID: ', 9, 'Valid Banner ID must contain 9 digits')
             # Add card hex number and banner ID to database
@@ -145,9 +145,9 @@ while True:
     # Report card information back to user       
     userData = AccessList.row_values(userRow)
     if '#N/A' in userData: 
-        print("ID card and banner ID have been affiliated, but user data has not been added to the master user list. Please contact Karl Dyer to complete user data.")
+        print('ID card NFC hex code and banner ID have been affiliated, but user data has not been added to the master user list. Please contact Karl Dyer to complete user data.')
     else:
-        print("Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}".format(userData[3], userData[2], userData[1], userData[5], userData[4]))
+        print('Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}'.format(userData[3], userData[2], userData[1], userData[5], userData[4]))
     
     # Prompt for card removal and wait until no card is detected
     print('\nPlease remove your ID.\n')
