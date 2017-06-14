@@ -144,7 +144,10 @@ while True:
         
     # Report card information back to user       
     userData = AccessList.row_values(userRow)
-    print("Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}".format(userData[3], userData[2], userData[1], userData[5], userData[4]))
+    if '#N/A' in userData: 
+        print("User has not been added to the master student list, please contact Karl Dyer to be added.")
+    else:
+        print("Registered to {0} {1} ({2}) of {3}\nEmail Contact: {4}".format(userData[3], userData[2], userData[1], userData[5], userData[4]))
     
     # Prompt for card removal and wait until no card is detected
     print('\nPlease remove your ID.\n')
