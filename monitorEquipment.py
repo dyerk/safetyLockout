@@ -176,7 +176,8 @@ time.tzset()
 
 # Camera Setup
 camera = picamera.PiCamera()
-imgFilename = 'tempimage.jpg'
+imgFilename = 'testimage.jpg'
+camera.capture(imgFilename)
 
 # PROGRAM
 # ------------
