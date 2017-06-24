@@ -182,6 +182,7 @@ imgFilename = 'tempimage.jpg'
 # ------------
 # Initialize program variables.
 AccessList = None
+drive = None
 
 # Main script to setup card then loop to detect cards and interperet.
 while True:
@@ -189,6 +190,10 @@ while True:
     set_machine_state('disabled')
     print('\nInsert Rowan ID card to enable ' + MACHINE_NAME + '\n')
     uidhex = read_nfc_blocking()    
+    
+    # Gain access to drive
+    if Drive is None:
+        drive = login_drive(DRIVE_CREDENTIALS)
     
     # Gain access to database and machine log then look up card to see if valid
     if AccessList is None:
