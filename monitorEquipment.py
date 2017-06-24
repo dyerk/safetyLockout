@@ -228,6 +228,9 @@ while True:
             wait_for_card_removal()
             #timestamp = clock.request('north-america.pool.ntp.org',version=3)
             MachineLog.update_acell('D'+str(row+1), str(time.strftime('%x %X %Z')))
+            camera.capture(imgFilename)
+            uploadId = upload_file(imgFilename, MACHINE_NAME + ' ' + timestamp, DRIVE_SAVE_FOLDER_ID)
+            MachineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
             print('Certification not current')
         
