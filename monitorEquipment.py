@@ -16,15 +16,6 @@ from pydrive.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-# EQUIPMENT SPECIFIC
-# ******************* MUST CHANGE ****************************
-# Change these constants to reflect equpiment being monitored.
-WORKSHEET_MACHINE_LOG = 'Mill1 - Log'
-MACHINE_NAME = 'Mill 1'
-MACHINE_COL = COL_CERT_MILL
-# ******************* MUST CHANGE ****************************
-
-
 # CONSTANTS
 # --------------
 # Constants only to be changed if new database is used.
@@ -60,6 +51,15 @@ LED_GREEN = 17
 LED_YELLOW = 27
 LED_RED = 22
 RELAY1 = 4
+
+
+# EQUIPMENT SPECIFIC
+# ******************* MUST CHANGE ****************************
+# Change these constants to reflect equpiment being monitored.
+WORKSHEET_MACHINE_LOG = 'Mill1 - Log'
+MACHINE_NAME = 'Mill 1'
+MACHINE_COL = COL_CERT_MILL
+# ******************* MUST CHANGE ****************************
 
 
 # FUNCTIONS
