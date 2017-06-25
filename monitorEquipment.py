@@ -177,8 +177,7 @@ GPIO.setup([LED_GREEN, LED_YELLOW, LED_RED, RELAY1], GPIO.OUT)
 # Camera Setup
 camera = picamera.PiCamera()
 imageFilename = 'testimage.jpg'
-camera.start_preview()
-camera.capture('test.jpg')
+#camera.start_preview()
 
 # PROGRAM
 # ------------
