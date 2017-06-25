@@ -77,12 +77,12 @@ def wait_for_card_removal():
         continue
 
 # Check database for NFC hex id and return whether card is registered.
-def process_card(nfchex): 
-    if AccessList is None:
+def process_card(database, nfchex): 
+    if database is None:
         return CARD_TYPE_INVALID
 
     try:
-        cell = AccessList.find(str(nfchex))
+        cell = database.find(str(nfchex))
         return CARD_TYPE_USER
     except:
         return CARD_TYPE_UNKNOWN
@@ -117,8 +117,8 @@ def login_drive(credentials_file):
             gauth.Authorize()
         # Save the current credentials to a file
         gauth.SaveCredentialsFile(credentials_file)
-        drive = GoogleDrive(gauth)
-        return drive
+        openedDrive = GoogleDrive(gauth)
+        return openedDrive
     except Exception as ex:
         print('Unable to login and get spreadsheet. Check OAuth credentials, spreadsheet name, and make sure spreadsheet is shared to the client_email address in the OAuth .json file!')
         print('Google sheet login failed with error:', ex)
@@ -148,15 +148,15 @@ def set_machine_state(state):
         GPIO.output(RELAY1,GPIO.LOW)
         
 # Upload a file from the local machine to a Google Drive and return the new Google file id.
-def upload_file(local_filename, save_as_filename, drive_folder_id):
+def upload_file(local_filename, save_as_filename, drive, drive_folder_id):
     fileToUpload = drive.CreateFile({"title":[save_as_filename], "parents":[{"kind":"drive#fileLink", "id":drive_folder_id}]})
     fileToUpload.SetContentFile(local_filename)
     fileToUpload.Upload()
     return fileToUpload['id']
 
     
-# BOARD CONFIGURATION
-
+# HARDWARE SETUP
+# -----------------
 # Create instances of PN532 object and begin communications reporting back version
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
@@ -171,19 +171,21 @@ GPIO.setup([LED_GREEN, LED_YELLOW, LED_RED, RELAY1], GPIO.OUT)
 #GPIO.setmode(GPIO.BOARD)
 
 # Setup clock
-os.environ['TZ'] = 'EST5EDT'
-time.tzset()
+# os.environ['TZ'] = 'EST5EDT'
+# time.tzset()
 
 # Camera Setup
 camera = picamera.PiCamera()
-imgFilename = 'testimage.jpg'
+imageFilename = 'testimage.jpg'
+camera.start_preview()
 camera.capture('test.jpg')
 
 # PROGRAM
 # ------------
 # Initialize program variables.
-AccessList = None
-drive = None
+accessList = None       # spreadsheet with list of users and access rights
+machineLog = None       # spreadsheet to log machine usage 
+imageDrive = None       # drive on which to store machine usage images
 
 # Main script to setup card then loop to detect cards and interperet.
 while True:
@@ -193,32 +195,32 @@ while True:
     uidhex = read_nfc_blocking()    
     
     # Gain access to drive
-    if Drive is None:
-        drive = login_drive(DRIVE_CREDENTIALS)
+    if imageDrive is None:
+        imageDrive = login_drive(DRIVE_CREDENTIALS)
     
     # Gain access to database and machine log then look up card to see if valid
-    if AccessList is None:
-        AccessList = login_open_sheet(GDOCS_OAUTH_JSON, GDOCS_SPREADSHEET_NAME, WORKSHEET_ACCESS_NAME)
-        MachineLog = login_open_sheet(GDOCS_OAUTH_JSON, GDOCS_SPREADSHEET_NAME, 'Mill1 - Log')
-    status = process_card(uidhex)
+    if accessList is None:
+        accessList = login_open_sheet(GDOCS_OAUTH_JSON, GDOCS_SPREADSHEET_NAME, WORKSHEET_ACCESS_NAME)
+        machineLog = login_open_sheet(GDOCS_OAUTH_JSON, GDOCS_SPREADSHEET_NAME, 'Mill1 - Log')
+    status = process_card(accessList, uidhex)
     
     # Choose action based on status of card in database
     if status == CARD_TYPE_USER:
-        userRow = AccessList.find(str(uidhex)).row
-        userData = AccessList.row_values(userRow)   
+        userRow = accessList.find(str(uidhex)).row
+        userData = accessList.row_values(userRow)   
         print('User: {0} {1}'.format(userData[3], userData[2]))
         
         # Log user start into machine log
         #timestamp = clock.request('north-america.pool.ntp.org',version=3)
-        row = MachineLog.row_count
+        row = machineLog.row_count
         timestamp = time.strftime('%x %X %Z')
-        MachineLog.resize(rows=row+1, cols=6)
-        MachineLog.update_acell('A'+str(row+1), str(userData[1]))
-        MachineLog.update_acell('B'+str(row+1), str(userData[3] + ' ' + userData[2]))
-        MachineLog.update_acell('C'+str(row+1), str(timestamp))
-        camera.capture(imgFilename)
-        uploadId = upload_file(imgFilename, MACHINE_NAME + ' ' + timestamp, DRIVE_SAVE_FOLDER_ID)
-        MachineLog.update_acell('E'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
+        machineLog.resize(rows=row+1, cols=6)
+        machineLog.update_acell('A'+str(row+1), str(userData[1]))
+        machineLog.update_acell('B'+str(row+1), str(userData[3] + ' ' + userData[2]))
+        machineLog.update_acell('C'+str(row+1), str(timestamp))
+        camera.capture(imageFilename)
+        uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
+        machineLog.update_acell('E'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
@@ -228,10 +230,10 @@ while True:
             # Wait for user to log out then complete machine log
             wait_for_card_removal()
             #timestamp = clock.request('north-america.pool.ntp.org',version=3)
-            MachineLog.update_acell('D'+str(row+1), str(time.strftime('%x %X %Z')))
-            camera.capture(imgFilename)
-            uploadId = upload_file(imgFilename, MACHINE_NAME + ' ' + timestamp, DRIVE_SAVE_FOLDER_ID)
-            MachineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
+            machineLog.update_acell('D'+str(row+1), str(time.strftime('%x %X %Z')))
+            camera.capture(imageFilename)
+            uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
+            machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
             print('Certification not current')
         
@@ -242,3 +244,5 @@ while True:
         print('Error: Database could not be reached.')
         continue
     wait_for_card_removal()
+Contact GitHub API Training Shop Blog About
+© 2017 GitHub, Inc. Terms Privacy Security Status Help
