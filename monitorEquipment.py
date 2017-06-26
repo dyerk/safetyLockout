@@ -10,6 +10,7 @@ import picamera
 import RPi.GPIO as GPIO
 import gspread
 import Adafruit_PN532 as PN532
+import Adafruit_CharLCD as LCD
 
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -43,10 +44,23 @@ CARD_TYPE_USER = 0
 CARD_TYPE_UNKNOWN = 1
 
 # GPIO pin connections using DEVICE_CONNECTION naming convention.
-PN532_SSEL = 13  #18
-PN532_MOSI = 5  #23
-PN532_MISO = 12 #24
-PN532_SCLK = 6  #25
+PN532_SSEL = 13
+PN532_MOSI = 5
+PN532_MISO = 12
+PN532_SCLK = 6
+LCD_RS = 27
+LCD_EN = 22
+LCD_D4 = 25
+LCD_D5 = 24
+LCD_D6 = 23
+LCD_D7 = 18
+LCD_RED = 4
+LCD_GREEN = 17
+LCD_BLUE = 7
+
+# LCD constants
+LCD_COLS = 20
+LCD_ROWS = 4
 
 
 # EQUIPMENT SPECIFIC
@@ -120,27 +134,15 @@ def login_drive(credentials_file):
         print('Google sheet login failed with error:', ex)
         sys.exit(1)
         
-# Set LED status indicators and control pin driving relay		
+# Set control pin driving relay		
 def set_machine_state(state):
     if state == 'enabled':
-        GPIO.output(LED_GREEN,GPIO.HIGH)
         GPIO.output(RELAY1,GPIO.HIGH)
-        GPIO.output(LED_YELLOW,GPIO.LOW)
-        GPIO.output(LED_RED,GPIO.LOW)
     elif state == 'timeout':
-        GPIO.output(LED_GREEN,GPIO.LOW)
-        GPIO.output(LED_YELLOW,GPIO.HIGH)
         GPIO.output(RELAY1,GPIO.HIGH)
-        GPIO.output(LED_RED,GPIO.LOW)
     elif state == 'disabled':
-        GPIO.output(LED_GREEN,GPIO.LOW)
-        GPIO.output(LED_YELLOW,GPIO.LOW)
-        GPIO.output(LED_RED,GPIO.HIGH)
         GPIO.output(RELAY1,GPIO.LOW)
     else:
-        GPIO.output(LED_GREEN,GPIO.LOW)
-        GPIO.output(LED_YELLOW,GPIO.LOW)
-        GPIO.output(LED_RED,GPIO.LOW)
         GPIO.output(RELAY1,GPIO.LOW)
         
 # Upload a file from the local machine to a Google Drive and return the new Google file id.
@@ -150,21 +152,42 @@ def upload_file(local_filename, save_as_filename, drive, drive_folder_id):
     fileToUpload.Upload()
     return fileToUpload['id']
 
+def lcd_message(screen, background, messageText):
+    if background is 'Blue':
+        screen.set_color(0, 0, 1)
+    elif background is 'Red':
+        screen.set_color(1, 0, 0)
+    elif background is 'Yellow':
+        screen.set_color(1, 1, 0)
+    elif background is 'Green':
+        screen.set_color(0, 1, 0)
+    elif background is 'White':
+        screen.set_color(1, 1, 1)
+    else:
+        screen.set_color(1, 1, 1)
+    screen.clear()
+    screen.message(messageText)
+    
     
 # HARDWARE SETUP
 # -----------------
+# Create instances of LCD object and begin communications
+lcd = LCD.Adafruit_RGBCharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, 
+                           LCD_D7, LCD_COLS, LCD_ROWS, LCD_RED, LCD_GREEN, LCD_BLUE)
+
 # Create instances of PN532 object and begin communications reporting back version
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
+tempMessage = ('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
+print(tempMessage)
+lcd_message(lcd,'Yellow',tempMessage)
 
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
 
 # Configure GPIO pins on the pi.
-GPIO.setup([LED_GREEN, LED_YELLOW, LED_RED, RELAY1], GPIO.OUT)
-#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup([RELAY1], GPIO.OUT)
 
 # Setup clock
 # os.environ['TZ'] = 'EST5EDT'
@@ -187,8 +210,9 @@ while True:
     # Read NFC from Rowan ID card
     set_machine_state('disabled')
     print('\nInsert Rowan ID card to enable ' + MACHINE_NAME + '\n')
+    lcd_message(lcd,'Red',('Insert Rowan ID card to enable ' + MACHINE_NAME))
     uidhex = read_nfc_blocking()    
-    
+        
     # Gain access to drive
     if imageDrive is None:
         imageDrive = login_drive(DRIVE_CREDENTIALS)
@@ -203,7 +227,8 @@ while True:
     if status == CARD_TYPE_USER:
         userRow = accessList.find(str(uidhex)).row
         userData = accessList.row_values(userRow)   
-        print('User: {0} {1}'.format(userData[3], userData[2]))
+        #print('User: {0} {1}'.format(userData[3], userData[2]))
+        tempMessage = ('User: {0} {1}\n'.format(userData[3], userData[2]))
         
         # Log user start into machine log
         #timestamp = clock.request('north-america.pool.ntp.org',version=3)
@@ -219,7 +244,9 @@ while True:
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
-            print(MACHINE_NAME + ' Enabled\nRemove card when done.')
+            tempMessage = tempMessage + (MACHINE_NAME + ' Enabled\nRemove card when done.')
+            print(tempMessage)
+            lcd_message(lcd,'Green',tempMessage)
             set_machine_state('enabled')
             
             # Wait for user to log out then complete machine log
@@ -230,12 +257,17 @@ while True:
             uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
             machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
-            print('Certification not current')
-        
+            tempMessage = tempMessage + 'Certification not current'
+            print(tempMessage)
+            lcd_message(lcd,'Green',tempMessage)
+            set_machine_state('disabled')
+            
     elif status == CARD_TYPE_UNKNOWN:
         print('Your card has not been registered - see technician.')
-        set_machine_state('red')
+        lcd_message(lcd,'Red','Your card is not registered.\n\nSee technician for help.')
+        set_machine_state('disabled')
     else:
         print('Error: Database could not be reached.')
+        lcd_message(lcd,'Red','Error: Database could not be reached.')
         continue
     wait_for_card_removal()
