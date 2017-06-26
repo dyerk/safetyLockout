@@ -107,17 +107,19 @@ def validate_prompt_integer(prompt, numDigits, errorMessage='Please enter an int
 
 def lcd_message(screen, background, messageText):
     if background is 'Blue':
-        screen.set_color(0, 0, 1)
+        lcd.set_color(0, 0, 1)
     elif background is 'Red':
-        screen.set_color(1, 0, 0)
+        lcd.set_color(1, 0, 0)
     elif background is 'Yellow':
-        screen.set_color(1, 1, 0)
+        lcd.set_color(1, 1, 0)
     elif background is 'Green':
-        screen.set_color(0, 1, 0)
+        lcd.set_color(0, 1, 0)
+    elif background is 'White':
+        lcd.set_color(1, 1, 1)
     else:
-        screen.set_color(1, 1, 1) #White
-    screen.clear()
-    screen.message(messageText)
+        lcd.set_color(1, 1, 1)
+    lcd.clear()
+    lcd.message(messageText)
     
     
 # HARDWARE SETUP
