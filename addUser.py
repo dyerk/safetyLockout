@@ -137,6 +137,9 @@ while True:
             userRow = accessList.find(str(uidhex)).row
             print('Card {0} has been added to the system.'.format(uidhex))        
         elif addNewCard is 'n':
+            # Prompt for card removal and wait until no card is detected
+            print('\nPlease remove your ID.\n')
+            wait_for_card_removal()
             continue
     else:
         print('Error: Database could not be reached.')
