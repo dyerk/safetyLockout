@@ -6,6 +6,7 @@ import binascii
 
 import gspread
 import Adafruit_PN532 as PN532
+import Adafruit_CharLCD as LCD
 
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -24,10 +25,23 @@ CARD_TYPE_USER = 0
 CARD_TYPE_UNKNOWN = 1
 
 # GPIO pin connections using DEVICE_CONNECTION naming convention.
-PN532_SSEL = 13  #18
-PN532_MOSI = 5  #23
-PN532_MISO = 12 #24
-PN532_SCLK = 6  #25
+PN532_SSEL = 13
+PN532_MOSI = 5
+PN532_MISO = 12
+PN532_SCLK = 6
+LCD_RS = 27
+LCD_EN = 22
+LCD_D4 = 25
+LCD_D5 = 24
+LCD_D6 = 23
+LCD_D7 = 18
+LCD_RED = 4
+LCD_GREEN = 17
+LCD_BLUE = 7
+
+# LCD constants
+LCD_COLS = 20
+LCD_ROWS = 4
 
 
 # FUNCTIONS
@@ -91,14 +105,34 @@ def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an inte
             response = None
     return response
 
-
+ def lcd_message(screen,background,messageText):
+    if background is 'Blue':
+        screen.set_color(0,0,1)
+    elif background is 'Red':
+        screen.set_color(1,0,0)
+    elif background is 'Yellow':
+        screen.set_color(1,1,0)
+    elif background is 'Green':
+        screen.set_color(0,1,0)
+    else:
+        screen.set_color(1,1,1) #White
+    screen.clear()
+    screen.message(messageText)
+    
+    
 # HARDWARE SETUP
 # -----------------
+# Create instances of LCD object and begin communications
+lcd = LCD.Adafruit_CharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, 
+                           LCD_D7, LCD_COLS, LCD_ROWS, LCD_RED, LCD_GREEN, LCD_BLUE)
+
 # Create instances of PN532 object and begin communications reporting back version
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
+tempMessage = ('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
+print(tempMessage)
+lcd_message(lcd,'Blue',tempMessage)
 
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
