@@ -105,7 +105,7 @@ def validate_prompt_integer(prompt, numDigits, errorMessage='Please enter an int
             response = None
     return response
 
-def lcd_message(screen, background, messageText):
+def lcd_message(background, messageText):
     if background is 'Blue':
         lcd.set_color(0, 0, 1)
     elif background is 'Red':
@@ -134,7 +134,7 @@ pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
 tempMessage = ('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
 print(tempMessage)
-lcd_message(lcd,'Blue',tempMessage)
+lcd_message('Blue',tempMessage)
 
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
@@ -149,7 +149,7 @@ accessList = None       # spreadsheet with list of users and access rights
 while True:
     # Read NFC from Rowan ID card
     print('\nWaiting for MiFare card...')
-    lcd_message(lcd,'Green','Waiting for ID Card')
+    lcd_message('Green','Waiting for ID Card')
     uidhex = read_nfc_blocking()    
     print('Card scanned has UID: {0}\n'.format(uidhex))
     
