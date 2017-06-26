@@ -94,7 +94,7 @@ def validate_prompt_yn(prompt):
     return response
 
 # Prompt user and require an integer of specified length to be returned
-def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an integer'):
+def validate_prompt_integer(prompt, numDigits, errorMessage='Please enter an integer'):
     response = None
     while response is None:
         response = raw_input(prompt)
@@ -105,17 +105,17 @@ def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an inte
             response = None
     return response
 
- def lcd_message(screen,background,messageText):
+def lcd_message(screen, background, messageText):
     if background is 'Blue':
-        screen.set_color(0,0,1)
+        screen.set_color(0, 0, 1)
     elif background is 'Red':
-        screen.set_color(1,0,0)
+        screen.set_color(1, 0, 0)
     elif background is 'Yellow':
-        screen.set_color(1,1,0)
+        screen.set_color(1, 1, 0)
     elif background is 'Green':
-        screen.set_color(0,1,0)
+        screen.set_color(0, 1, 0)
     else:
-        screen.set_color(1,1,1) #White
+        screen.set_color(1, 1, 1) #White
     screen.clear()
     screen.message(messageText)
     
@@ -147,6 +147,7 @@ accessList = None       # spreadsheet with list of users and access rights
 while True:
     # Read NFC from Rowan ID card
     print('\nWaiting for MiFare card...')
+    lcd_message(lcd,'Green','Waiting for ID Card')
     uidhex = read_nfc_blocking()    
     print('Card scanned has UID: {0}\n'.format(uidhex))
     
