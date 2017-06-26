@@ -42,7 +42,6 @@ def read_nfc_blocking():
 # Stalls program until no card is present in front of card reader.
 def wait_for_card_removal():
     while pn532.read_passive_target() != None:
-        print(pn532.read_passive_target())
         continue
     
 # Check database for NFC hex id and return whether card is registered.
