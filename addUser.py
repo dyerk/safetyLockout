@@ -35,13 +35,13 @@ PN532_SCLK = 25
 # Read hex id from NFC card - stalls program until card is detected.
 def read_nfc_blocking():
     nfchex = None
-    while nfchex == None:
+    while nfchex != None:
         nfchex = pn532.read_passive_target()
     return binascii.hexlify(nfchex)
 
 # Stalls program until no card is present in front of card reader.
 def wait_for_card_removal():
-    while pn532.read_passive_target() == None:
+    while pn532.read_passive_target() != None:
         continue
     
 # Check database for NFC hex id and return whether card is registered.
