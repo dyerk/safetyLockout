@@ -182,7 +182,7 @@ lcd = LCD.Adafruit_RGBCharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6,
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-tempMessage = ('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
+tempMessage = ('Found PN532\nFirmware version {0}.{1}'.format(ver, rev))
 lcd_message(lcd,'Yellow',tempMessage)
 time.sleep(3)
 
@@ -218,7 +218,7 @@ imageDrive = None       # drive on which to store machine usage images
 while True:
     # Read NFC from Rowan ID card
     set_machine_state('disabled')
-    lcd_message(lcd,'Red',(MACHINE_NAME + ': disabled\n\nInsert Rowan ID\nto enable ' + MACHINE_NAME))
+    lcd_message(lcd,'Red',(MACHINE_NAME + ': Disabled\n\nInsert Rowan ID\nto enable ' + MACHINE_NAME))
     uidhex = read_nfc_blocking()    
         
     # Gain access to drive
