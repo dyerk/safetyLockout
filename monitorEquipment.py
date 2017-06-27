@@ -255,7 +255,7 @@ while True:
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
-            tempMessage = (MACHINE_NAME + ': Enabled\n' + tempMessage + '\nRemove ID when done.')
+            tempMessage = (MACHINE_NAME + ': Enabled\n' + tempMessage + '\n\nRemove ID when done.')
             lcd_message(lcd,'Green',tempMessage)
             set_machine_state('enabled')
             
