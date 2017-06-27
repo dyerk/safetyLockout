@@ -266,7 +266,7 @@ while True:
                 uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
                 machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
-            tempMessage = (MACHINE_NAME + ': Disabled\n' + tempMessage + '\nCertification not current'
+            tempMessage = (MACHINE_NAME + ': Disabled\n' + tempMessage + '\nCertification not current')
             lcd_message(lcd,'Red',tempMessage)
             set_machine_state('disabled')
             
