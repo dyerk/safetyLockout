@@ -200,7 +200,7 @@ GPIO.setup([RELAY1], GPIO.OUT)
 try:
     camera = picamera.PiCamera()
 except Exception as ex:
-    camear = None
+    camera = None
     lcd_message(lcd,'Yellow','Camera not enabled.\n-Check connections\n-Check RasPi Config')
     time.sleep(3)
     print('Error Details: ', ex)
