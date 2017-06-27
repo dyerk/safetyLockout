@@ -235,8 +235,8 @@ while True:
     if status == CARD_TYPE_USER:
         userRow = accessList.find(str(uidhex)).row
         userData = accessList.row_values(userRow)   
-        #print('User: {0} {1}'.format(userData[3], userData[2]))
         tempMessage = ('User: {0} {1}\n'.format(userData[3], userData[2]))
+        lcd_message(lcd,'Blue','\nChecking Credentials')
         
         # Log user start into machine log
         #timestamp = clock.request('north-america.pool.ntp.org',version=3)
