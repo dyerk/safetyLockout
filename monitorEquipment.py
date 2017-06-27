@@ -236,8 +236,8 @@ while True:
         userRow = accessList.find(str(uidhex)).row
         userData = accessList.row_values(userRow)   
         tempMessage = ('User: {0} {1}\n'.format(userData[3], userData[2]))
-        if tempMessage.length > 20: #Clip names longer than the screen
-            tempMessage = tempMessage[0:20]
+        if len(tempMessage) > 20: #Clip names longer than the screen
+            tempMessage = tempMessage[0:19]
         lcd_message(lcd,'Blue','\nChecking Credentials')
         
         # Log user start into machine log
