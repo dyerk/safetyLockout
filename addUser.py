@@ -24,10 +24,10 @@ CARD_TYPE_USER = 0
 CARD_TYPE_UNKNOWN = 1
 
 # GPIO pin connections using DEVICE_CONNECTION naming convention.
-PN532_SSEL = 18
-PN532_MOSI = 23
-PN532_MISO = 24
-PN532_SCLK = 25
+PN532_SSEL = 13
+PN532_MOSI = 5
+PN532_MISO = 12
+PN532_SCLK = 6
 
 
 # FUNCTIONS
@@ -80,7 +80,7 @@ def validate_prompt_yn(prompt):
     return response
 
 # Prompt user and require an integer of specified length to be returned
-def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an integer'):
+def validate_prompt_integer(prompt, numDigits, errorMessage='Please enter an integer'):
     response = None
     while response is None:
         response = raw_input(prompt)
@@ -91,14 +91,14 @@ def validate_prompt_integer(prompt,numDigits, errorMessage='Please enter an inte
             response = None
     return response
 
-
+    
 # HARDWARE SETUP
 # -----------------
 # Create instances of PN532 object and begin communications reporting back version
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
+print('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
 
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
