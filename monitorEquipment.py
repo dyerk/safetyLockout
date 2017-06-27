@@ -57,6 +57,7 @@ LCD_D7 = 18
 LCD_RED = 4
 LCD_GREEN = 17
 LCD_BLUE = 7
+RELAY1 = 9
 
 # LCD constants
 LCD_COLS = 20
@@ -199,7 +200,7 @@ try:
     camera = picamera.PiCamera()
 except Exception as ex:
     camear = None
-    lcd_message(lcd,'Yellow','Camera not enabled.\nCheck connections and RasPi Config')
+    lcd_message(lcd,'Yellow','Camera not enabled.\n-Check connections\n-Check RasPi Config')
     print('Error Details: ', ex)
         
 imageFilename = 'testimage.jpg'
