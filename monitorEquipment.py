@@ -184,6 +184,7 @@ pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
 tempMessage = ('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
 lcd_message(lcd,'Yellow',tempMessage)
+time.sleep(3)
 
 # Configure PN532 to communicate with MiFare cards.
 pn532.SAM_configuration()
@@ -201,6 +202,7 @@ try:
 except Exception as ex:
     camear = None
     lcd_message(lcd,'Yellow','Camera not enabled.\n-Check connections\n-Check RasPi Config')
+    time.sleep(3)
     print('Error Details: ', ex)
         
 imageFilename = 'testimage.jpg'
@@ -216,7 +218,7 @@ imageDrive = None       # drive on which to store machine usage images
 while True:
     # Read NFC from Rowan ID card
     set_machine_state('disabled')
-    lcd_message(lcd,'Red',('Insert Rowan ID card to enable ' + MACHINE_NAME))
+    lcd_message(lcd,'Red',(MACHINE_NAME + ': disabled\n\nInsert Rowan ID\nto enable ' + MACHINE_NAME))
     uidhex = read_nfc_blocking()    
         
     # Gain access to drive
@@ -251,7 +253,7 @@ while True:
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
-            tempMessage = tempMessage + (MACHINE_NAME + ' Enabled\nRemove card when done.')
+            tempMessage = (MACHINE_NAME + ': Enabled\n' + tempMessage + '\nRemove ID when done.')
             lcd_message(lcd,'Green',tempMessage)
             set_machine_state('enabled')
             
@@ -264,14 +266,14 @@ while True:
                 uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
                 machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
-            tempMessage = tempMessage + 'Certification not current'
-            lcd_message(lcd,'Green',tempMessage)
+            tempMessage = (MACHINE_NAME + ': Disabled\n' + tempMessage + '\nCertification not current'
+            lcd_message(lcd,'Red',tempMessage)
             set_machine_state('disabled')
             
     elif status == CARD_TYPE_UNKNOWN:
-        lcd_message(lcd,'Red','Your card is not registered.\n\nSee technician for help.')
+        lcd_message(lcd,'Red','Card Error\nID is not registered.\nSee technician for help.')
         set_machine_state('disabled')
     else:
-        lcd_message(lcd,'Red','Error: Database could not be reached.')
+        lcd_message(lcd,'Red','Error: \nDatabase could not be reached.\nSee technician for help')
         continue
     wait_for_card_removal()
