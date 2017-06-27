@@ -167,6 +167,8 @@ def lcd_message(screen, background, messageText):
         screen.set_color(1, 1, 1)
     screen.clear()
     screen.message(messageText)
+    os.system('clear')
+    print(messageText)
     
     
 # HARDWARE SETUP
@@ -179,8 +181,7 @@ lcd = LCD.Adafruit_RGBCharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6,
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-tempMessage = ('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
-print(tempMessage)
+tempMessage = ('Found PN532\nFirmware version: {0}.{1}'.format(ver, rev))
 lcd_message(lcd,'Yellow',tempMessage)
 
 # Configure PN532 to communicate with MiFare cards.
@@ -193,10 +194,15 @@ pn532.SAM_configuration()
 # os.environ['TZ'] = 'EST5EDT'
 # time.tzset()
 
-# Camera Setup
-camera = picamera.PiCamera()
+# Camera Setup    
+try:
+    camera = picamera.PiCamera()
+except Exception as ex:
+    camear = None
+    lcd_message(lcd,'Yellow','Camera not enabled.\nCheck connections and RasPi Config')
+    print('Error Details: ', ex)
+        
 imageFilename = 'testimage.jpg'
-#camera.start_preview()
 
 # PROGRAM
 # ------------
@@ -209,7 +215,6 @@ imageDrive = None       # drive on which to store machine usage images
 while True:
     # Read NFC from Rowan ID card
     set_machine_state('disabled')
-    print('\nInsert Rowan ID card to enable ' + MACHINE_NAME + '\n')
     lcd_message(lcd,'Red',('Insert Rowan ID card to enable ' + MACHINE_NAME))
     uidhex = read_nfc_blocking()    
         
@@ -238,14 +243,14 @@ while True:
         machineLog.update_acell('A'+str(row+1), str(userData[1]))
         machineLog.update_acell('B'+str(row+1), str(userData[3] + ' ' + userData[2]))
         machineLog.update_acell('C'+str(row+1), str(timestamp))
-        camera.capture(imageFilename)
-        uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
-        machineLog.update_acell('E'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
+        if camera is not None:
+            camera.capture(imageFilename)
+            uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
+            machineLog.update_acell('E'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         
         # Check users training and grant access if allowed
         if userData[MACHINE_COL] == '1':
             tempMessage = tempMessage + (MACHINE_NAME + ' Enabled\nRemove card when done.')
-            print(tempMessage)
             lcd_message(lcd,'Green',tempMessage)
             set_machine_state('enabled')
             
@@ -253,21 +258,19 @@ while True:
             wait_for_card_removal()
             #timestamp = clock.request('north-america.pool.ntp.org',version=3)
             machineLog.update_acell('D'+str(row+1), str(time.strftime('%x %X %Z')))
-            camera.capture(imageFilename)
-            uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
-            machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
+            if camera is not None:
+                camera.capture(imageFilename)
+                uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
+                machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
             tempMessage = tempMessage + 'Certification not current'
-            print(tempMessage)
             lcd_message(lcd,'Green',tempMessage)
             set_machine_state('disabled')
             
     elif status == CARD_TYPE_UNKNOWN:
-        print('Your card has not been registered - see technician.')
         lcd_message(lcd,'Red','Your card is not registered.\n\nSee technician for help.')
         set_machine_state('disabled')
     else:
-        print('Error: Database could not be reached.')
         lcd_message(lcd,'Red','Error: Database could not be reached.')
         continue
     wait_for_card_removal()
