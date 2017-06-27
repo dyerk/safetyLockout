@@ -189,7 +189,7 @@ lcd_message(lcd,'Yellow',tempMessage)
 pn532.SAM_configuration()
 
 # Configure GPIO pins on the pi.
-#GPIO.setup([RELAY1], GPIO.OUT)
+GPIO.setup([RELAY1], GPIO.OUT)
 
 # Setup clock
 # os.environ['TZ'] = 'EST5EDT'
