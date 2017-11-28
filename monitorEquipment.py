@@ -69,7 +69,7 @@ LCD_ROWS = 4
 # Change these constants to reflect equpiment being monitored.
 WORKSHEET_MACHINE_LOG = 'Mill1 - Log'
 MACHINE_NAME = 'Mill 1'
-MACHINE_COL = COL_CERT_MILL
+MACHINE_COL = COL_CERT_MILL - 1
 # ******************* MUST CHANGE ****************************
 
 
@@ -268,7 +268,7 @@ while True:
                 uploadId = upload_file(imageFilename, MACHINE_NAME + ' ' + timestamp, imageDrive, DRIVE_SAVE_FOLDER_ID)
                 machineLog.update_acell('F'+str(row+1), str('https://drive.google.com/open?id='+uploadId))
         else:
-            tempMessage = (MACHINE_NAME + ': Disabled\n' + tempMessage + '\nCertification not current')
+            tempMessage = (MACHINE_NAME + ': Disabled\n' + tempMessage + '\nCert not current')
             lcd_message(lcd,'Red',tempMessage)
             set_machine_state('disabled')
             
