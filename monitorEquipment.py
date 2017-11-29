@@ -182,7 +182,7 @@ lcd = LCD.Adafruit_RGBCharLCD(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6,
 pn532 = PN532.PN532(cs=PN532_SSEL, sclk=PN532_SCLK, mosi=PN532_MOSI, miso=PN532_MISO)
 pn532.begin()
 ic, ver, rev, support = pn532.get_firmware_version()
-tempMessage = ('Found Card Reader\nFirmware version {0}.{1}'.format(ver, rev))
+tempMessage = ('ound Card Reader\nFirmware version {0}.{1}'.format(ver, rev))
 lcd_message(lcd,'Blue',tempMessage)
 time.sleep(3)
 
